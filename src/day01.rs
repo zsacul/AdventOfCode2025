@@ -1,46 +1,96 @@
-use std::collections::HashMap;
-use super::tools;
-
 pub fn part1(data:&[String])->usize
 {
-    let mut v1 = vec![];
-    let mut v2 = vec![];
+    let mut res = 0;
+    let mut code = 50;
 
     data.iter()
         .for_each(|s| 
             {
-                let n = tools::split_to_usize(s,"   ");
-                v1.push(n[0]);
-                v2.push(n[1]);
+                let amount = s[1..].parse::<i64>().unwrap();               
+
+                if s.chars().next().unwrap()=='L' {
+                    code -= amount;
+                    while code<0 {
+                        code+=100;
+                    }
+                                        
+                } else {
+                    code += amount;
+                    while code>=100 {
+                        code-=100;
+                    }
+                }
+                if code==0 {
+                    res+=1;
+                }
             }
         );
         
-    v1.sort();
-    v2.sort();
-
-    v1.iter()
-      .enumerate()
-      .map(|(i,_)| v1[i].abs_diff(v2[i]))
-      .sum::<usize>()
+    res as usize
+    
 }
+
 
 pub fn part2(data:&[String])->usize
 {
-    let mut v = vec![];
-    let mut hash = HashMap::new();
+    let mut res = 0;
+    let mut code = 50;
 
     data.iter()
         .for_each(|s| 
             {
-                let n= tools::split_to_usize(s,"   ");
-                v.push(n[0]);
-                hash.entry(n[1]).and_modify(|e| *e+=1).or_insert(1);
+                let mut amount = s[1..].parse::<i128>().unwrap();
+                let dir = s.chars().next().unwrap();
+
+                let rot = amount/100;
+                if rot>0 {
+                    res += rot as usize;
+                    amount = amount % 100;
+                }
+                
+                if dir=='L' {
+                    let mut was = code==0;
+                    code -= amount;
+                    
+                    if code==0 {
+                        res+=1;
+                    }
+                    else
+                    {                        
+                        while code<0 {
+                            code+=100;
+
+                         if !was {
+                                res+=1;
+                            }
+                            was = false;
+                        }                        
+                    }
+                                        
+                } 
+                else           
+                {
+                    code += amount;
+
+                    if code==0 
+                    {
+                        res+=1;
+                        println!("{} at zero",s);
+                    }
+                    else 
+                    {
+                        while code>99 {
+                            code-=100;
+                            res+=1;                            
+                        }                        
+                    }
+                }
+
+                
             }
         );
-
-    v.iter()
-     .map(|n| n*hash.get(n).unwrap_or(&0))
-     .sum()
+        
+    res as usize
 }
 
 #[allow(unused)]
@@ -55,26 +105,43 @@ pub fn solve(data:&[String])
 fn test1()
 {
     let v = vec![
-        "3   4".to_string(),
-        "4   3".to_string(),
-        "2   5".to_string(),
-        "1   3".to_string(),
-        "3   9".to_string(),
-        "3   3".to_string(),
-    ];
-    assert_eq!(part1(&v),11);
+        "L68".to_string(),
+        "L30".to_string(),
+        "R48".to_string(),
+        "L5".to_string(),
+        "R60".to_string(),
+        "L55".to_string(),
+        "L1".to_string(),
+        "L99".to_string(),
+        "R14".to_string(),
+        "L82".to_string(),
+  ];
+    assert_eq!(part1(&v),3);
 }
 
 #[test]
 fn test2()
 {
     let v = vec![
-        "3   4".to_string(),
-        "4   3".to_string(),
-        "2   5".to_string(),
-        "1   3".to_string(),
-        "3   9".to_string(),
-        "3   3".to_string(),
+        "L68".to_string(),
+        "L30".to_string(),
+        "R48".to_string(),
+        "L5".to_string(),
+        "R60".to_string(),
+        "L55".to_string(),
+        "L1".to_string(),
+        "L99".to_string(),
+        "R14".to_string(),
+        "L82".to_string(),
     ];
-    assert_eq!(part2(&v),31);
+    assert_eq!(part2(&v),6);
+}
+
+#[test]
+fn test3()
+{
+    let v = vec![
+        "R1000".to_string(),
+    ];
+    assert_eq!(part2(&v),10);
 }
