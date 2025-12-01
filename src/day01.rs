@@ -1,35 +1,22 @@
 pub fn part1(data:&[String])->usize
 {
-    let mut res = 0;
     let mut code = 50;
 
     data.iter()
-        .for_each(|s| 
+        .filter(|s| 
             {
-                let amount = s[1..].parse::<i64>().unwrap();               
+                let amount = s[1..].parse::<i32>().unwrap();               
 
                 if s.chars().next().unwrap()=='L' {
-                    code -= amount;
-                    while code<0 {
-                        code+=100;
-                    }
-                                        
+                    code -= amount;                                       
                 } else {
                     code += amount;
-                    while code>=100 {
-                        code-=100;
-                    }
                 }
-                if code==0 {
-                    res+=1;
-                }
-            }
-        );
-        
-    res as usize
-    
-}
 
+                code%100==0
+            }
+        ).count()   
+}
 
 pub fn part2(data:&[String])->usize
 {
@@ -60,15 +47,12 @@ pub fn part2(data:&[String])->usize
                         while code<0 {
                             code+=100;
 
-                         if !was {
-                                res+=1;
-                            }
+                            if !was { res+=1;}
                             was = false;
                         }                        
                     }
-                                        
                 } 
-                else           
+                  else           
                 {
                     code += amount;
 
@@ -77,16 +61,14 @@ pub fn part2(data:&[String])->usize
                         res+=1;
                         println!("{} at zero",s);
                     }
-                    else 
+                      else 
                     {
                         while code>99 {
                             code-=100;
                             res+=1;                            
                         }                        
                     }
-                }
-
-                
+                }              
             }
         );
         
