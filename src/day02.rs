@@ -1,81 +1,66 @@
-fn invalid(s:&str)->Option<i64>
+fn invalid(s:&str)->i64
 {
-    if s.chars().next().unwrap()=='0' 
+    if s.chars().next().unwrap()=='0' || s.len()%2==0 && s[..s.len()/2].repeat(2)==s
     {
-        return Some(s.parse().unwrap());
+        s.parse().unwrap()
     }
-    
-    if s.len()%2!=0
+      else
     {
-        return None;
+        0
     }
-
-    for i in 0..s.len()/2
-    {
-        if s.chars().nth(i).unwrap() != s.chars().nth(s.len()/2+i).unwrap() 
-        {
-            return None;
-        }
-    }
-
-    Some(s.parse().unwrap())
 }
 
 pub fn part1(data:&[String])->i64
 {
-    let tab = data[0].split(',').collect::<Vec<&str>>();
+    let line = data[0].split(',').collect::<Vec<&str>>();
 
-    tab.iter()
-       .map(|s| 
+    line.iter()
+        .map(|s| 
             {
                 let ss = s.split('-').collect::<Vec<&str>>();
                 let a = ss[0].parse::<i64>().unwrap();
                 let b = ss[1].parse::<i64>().unwrap();
 
-                let inva:i64 = (a..=b).map(|v| invalid(&v.to_string()[..]).unwrap_or(0) as i64)
-                                  .sum();
-                println!("{} {}",s,inva);
-                inva
+                (a..=b).map(|v| invalid(&v.to_string()[..]))
+                       .sum::<i64>()                                
             }
         ).sum()
 }
 
-fn invalid2(s:&str)->Option<i64>
+fn invalid2(s:&str)->i64
 {
-    for si in 1..=s.len()/2
-    {      
-        if s[..si].repeat(s.len()/si)==s
-        {
-            return Some(s.parse().unwrap());            
-        }
+    if (1..=s.len()/2).any(|size| s.len()%size==0 && s[..size].repeat(s.len()/size)==s)
+    {
+        s.parse().unwrap()
     }
-
-    return None;
+      else 
+    {
+        0
+    }
 }
 
 pub fn part2(data:&[String])->i64
 {
-    let tab = data[0].split(',').collect::<Vec<&str>>();
+    let data = data[0].split(',').collect::<Vec<&str>>();
 
-    tab.iter()
-       .map(|s| 
+    data.iter()
+        .map(|s| 
             {
-                let ss = s.split('-').collect::<Vec<&str>>();
-                let a = ss[0].parse::<i64>().unwrap();
-                let b = ss[1].parse::<i64>().unwrap();
+                let line = s.split('-').collect::<Vec<&str>>();
+                let a = line[0].parse::<i64>().unwrap();
+                let b = line[1].parse::<i64>().unwrap();
 
-                let inva:i64 = (a..=b).map(|v| invalid2(&v.to_string()[..]).unwrap_or(0) as i64)
-                                  .sum();
-
-                inva
+                (a..=b).map(|v| invalid2(v.to_string().as_str()))
+                       .sum::<i64>()
+                
             }
-        ).sum()
+        ).sum::<i64>()
 }
 
 #[allow(unused)]
 pub fn solve(data:&[String])
 {    
-    println!("Day1");
+    println!("Day2");
     println!("part1: {}",part1(data));
     println!("part2: {}",part2(data));
 }
