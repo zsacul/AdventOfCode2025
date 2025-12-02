@@ -25,11 +25,6 @@ pub fn part1(data:&[String])->i64
 {
     let tab = data[0].split(',').collect::<Vec<&str>>();
 
-    for s in tab.clone()
-    {
-        hash.insert(s, true);
-    }
-
     tab.iter()
        .map(|s| 
             {
@@ -48,14 +43,8 @@ pub fn part1(data:&[String])->i64
 fn invalid2(s:&str)->Option<i64>
 {
     for si in 1..=s.len()/2
-    {
-        let mut rep="".to_string();
-        while rep.len()<s.len()
-        {
-            rep += &s[..si];
-        }
-
-        if rep==s
+    {      
+        if s[..si].repeat(s.len()/si)==s
         {
             return Some(s.parse().unwrap());            
         }
