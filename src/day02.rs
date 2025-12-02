@@ -1,6 +1,6 @@
 fn invalid(s:&str)->i64
 {
-    if s.chars().next().unwrap()=='0' || s.len()%2==0 && s[..s.len()/2].repeat(2)==s
+    if s.starts_with('0') || s.len().is_multiple_of(2) && s[..s.len()/2].repeat(2)==s
     {
         s.parse().unwrap()
     }
@@ -10,16 +10,14 @@ fn invalid(s:&str)->i64
     }
 }
 
-pub fn part1(data:&[String])->i64
-{
-    let line = data[0].split(',').collect::<Vec<&str>>();
-
-    line.iter()
+fn part1(data:&str)->i64
+{ 
+    data.split(',')    
         .map(|s| 
             {
-                let ss = s.split('-').collect::<Vec<&str>>();
-                let a = ss[0].parse::<i64>().unwrap();
-                let b = ss[1].parse::<i64>().unwrap();
+                let line = s.split('-').collect::<Vec<&str>>();
+                let a = line[0].parse::<i64>().unwrap();
+                let b = line[1].parse::<i64>().unwrap();
 
                 (a..=b).map(|v| invalid(&v.to_string()[..]))
                        .sum::<i64>()                                
@@ -29,7 +27,7 @@ pub fn part1(data:&[String])->i64
 
 fn invalid2(s:&str)->i64
 {
-    if (1..=s.len()/2).any(|size| s.len()%size==0 && s[..size].repeat(s.len()/size)==s)
+    if (1..=s.len()/2).any(|size| s.len().is_multiple_of(size) && s[..size].repeat(s.len()/size)==s)
     {
         s.parse().unwrap()
     }
@@ -39,11 +37,9 @@ fn invalid2(s:&str)->i64
     }
 }
 
-pub fn part2(data:&[String])->i64
+fn part2(data:&str)->i64
 {
-    let data = data[0].split(',').collect::<Vec<&str>>();
-
-    data.iter()
+    data.split(',')
         .map(|s| 
             {
                 let line = s.split('-').collect::<Vec<&str>>();
@@ -54,11 +50,11 @@ pub fn part2(data:&[String])->i64
                        .sum::<i64>()
                 
             }
-        ).sum::<i64>()
+        ).sum()
 }
 
 #[allow(unused)]
-pub fn solve(data:&[String])
+pub fn solve(data:&str)
 {    
     println!("Day2");
     println!("part1: {}",part1(data));
@@ -68,17 +64,13 @@ pub fn solve(data:&[String])
 #[test]
 fn test1()
 {
-    let v = vec![
-        "11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124".to_string()
-  ];
+    let v = "11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124";  
     assert_eq!(part1(&v),1227775554);
 }
 
 #[test]
 fn test2()
 {
-    let v = vec![
-        "11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124".to_string()
-    ];
+    let v = "11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124";
     assert_eq!(part2(&v),4174379265);
 }

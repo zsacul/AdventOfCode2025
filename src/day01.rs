@@ -1,4 +1,4 @@
-pub fn part1(data:&[String])->usize
+fn part1(data:&[String])->usize
 {
     let mut code = 50;
 
@@ -19,7 +19,7 @@ pub fn part1(data:&[String])->usize
         ).count()   
 }
 
-pub fn part2(data:&[String])->usize
+fn part2(data:&[String])->usize
 {
     let mut res = 0;
     let mut code = 50;
@@ -34,7 +34,7 @@ pub fn part2(data:&[String])->usize
 
                 if full_rot>0 {
                     res += full_rot as usize;
-                    amount = amount % 100;
+                    amount %= 100;
                 }
                 let was = code==0;
                 

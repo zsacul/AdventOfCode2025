@@ -43,6 +43,19 @@ pub fn read_1d_string(path:&str)->Vec<String>
     res
 }
 
+#[allow(unused)]
+pub fn read_string(path:&str)->String
+{
+    let mut res:Vec<String> = vec![];
+    if let Ok(lines) = read_lines(path) {
+        for line in lines.map_while(Result::ok)
+        {
+            res.push(line);
+        }
+    }
+    res[0].clone()
+}
+
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 where P: AsRef<Path>, {
     let file = File::open(filename)?;
