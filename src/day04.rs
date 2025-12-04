@@ -14,15 +14,14 @@ struct Data
 impl Data {
     fn new(input: &[String]) -> Self 
     {
-        let  hash = tools::get_hash_table(input);
+        let hash = tools::get_hash_table(input);
      
         Data 
         {
             hash,
             visited : HashSet::new(),
-            dx : input[0].len(),
-            dy : input.len(),
-
+            dx      : input[0].len(),
+            dy      : input.len(),
         }
     }
 
@@ -40,7 +39,7 @@ impl Data {
                 {
                     print!("O");
                 }
-                    else 
+                  else 
                 {
                     print!("{}", c);
                 }
@@ -52,26 +51,19 @@ impl Data {
 
     fn count(&mut self)->usize
     {        
-        for y in 0..self.dy
-        {
-            for x in 0..self.dx
-            {        
-                let mut c=0;
-                let  o = Vec2::new(x as i64,y as i64);
-                for p in Vec2::around8(&o)
-                {
-                    if self.get(p)=='@'
-                    {
-                        c+=1;
-                    };
-                }
-                if c<4 && self.get(o)=='@'
-                {
-                    
-                    self.visited.insert(o);
-                }
-            }            
-        }
+        for (x,y) in tools::get_2d_iter(0,self.dx,0,self.dy)
+        {        
+            let o = Vec2::new(x as i64,y as i64);
+            
+            if self.get(o)=='@' && 
+               Vec2::around8(&o)
+                   .iter()
+                   .filter(|&p| self.get(*p)=='@')
+                   .count()<4
+                   {
+                       self.visited.insert(o);
+                   }
+        }            
 
         self.visited.len()
     }
@@ -90,21 +82,15 @@ pub fn part1(data:&[String])->usize
 pub fn part2(data:&[String])->usize
 {
     let mut d = Data::new(data);
-    let mut res = 0;    
+    let mut res = d.count();    
     
-    loop {
+    while !d.visited.is_empty()
+    {
+        for p in d.visited.iter() { d.hash.insert(*p, '.'); }
         d.visited.clear();
-        let c = d.count();
-        if c==0 {
-            break;
-        }
-
-        for p in d.visited.iter() {
-            d.hash.insert(*p, '.');
-        }
-        res+=c;
+        res+= d.count();
     }
-    res as usize
+    res
 }
 
 #[allow(unused)]
