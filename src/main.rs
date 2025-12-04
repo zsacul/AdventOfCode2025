@@ -14,7 +14,7 @@ mod vec3f;
 mod day01;
 mod day02;
 mod day03;
-//mod day04;
+mod day04;
 //mod day05;
 //mod day06;
 //mod day07;
@@ -23,19 +23,6 @@ mod day03;
 //mod day10;
 //mod day11;
 //mod day12;
-//mod day13;
-//mod day14;
-//mod day15;
-//mod day16;
-//mod day17;
-//mod day18;
-//mod day19;
-//mod day20;
-//mod day21;
-//mod day22;
-//mod day23;
-//mod day24;
-//mod day25;
 
 //use divoom::*;
 //use tokio; // Add this if not already in your dependencies
@@ -83,20 +70,20 @@ fn main()
         let day2_data  = tools::read_1d_string("data/day02.txt");
         day02::solve(day2_data[0].as_str());
     }
-*/        
+
     {
         let _timer = Timer::new();
         let day3_data  = tools::read_1d_string("data/day03.txt");
         day03::solve(&day3_data);
     }
-        
-        /*
+*/                
+
     {
         let _timer = Timer::new();
         let day4_data  = tools::read_1d_string("data/day04.txt");
         day04::solve(&day4_data);
     }
-
+        /*
     {
         let _timer = Timer::new();
         let day5_data  = tools::read_1d_string("data/day05.txt");
