@@ -83,7 +83,7 @@ fn main()
         let day4_data  = tools::read_1d_string("data/day04.txt");
         day04::solve(&day4_data);
     }
-        /*
+/*        
     {
         let _timer = Timer::new();
         let day5_data  = tools::read_1d_string("data/day05.txt");

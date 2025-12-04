@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::iter;
 use super::vec2::Vec2;
 use super::tools;
 
@@ -80,30 +81,22 @@ impl Data {
     }
 }
 
-pub fn part1(data:&[String])->usize
+fn part1(data:&[String])->usize
 {    
     Data::new(data).count()
 }
 
-pub fn part2(data:&[String])->usize
+fn part2(data:&[String])->usize
 {
     let mut data = Data::new(data);    
 
-    [0].iter()
-       .cycle()
+    iter::repeat(())
        .try_fold(data.count(), |res, _| 
        {
-            if data.visited.is_empty()
-            {
-               Err(res)
-            }
-               else
-            {
-               data.fill();
-               Ok(res + data.count())
-            }
-       }
-    ).unwrap_err()
+            if data.visited.is_empty() { Err(res)                            }
+                                  else { data.fill(); Ok(res + data.count()) }
+       })
+       .unwrap_err()
 }
 
 #[allow(unused)]
