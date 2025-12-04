@@ -26,7 +26,7 @@ impl Data {
     }
 
     #[allow(unused)]
-    fn print_hash(&self,vis:HashSet<Vec2>)
+    fn print_vis(&self,vis:HashSet<Vec2>)
     {
         for y in 0..self.dy
         {
@@ -72,6 +72,12 @@ impl Data {
     {
         *self.hash.get(&p).unwrap_or(&'.')
     }
+
+    fn fill(&mut self)
+    {       
+        for p in self.visited.iter() { self.hash.insert(*p, '.'); }
+        self.visited.clear();
+    }
 }
 
 pub fn part1(data:&[String])->usize
@@ -81,16 +87,23 @@ pub fn part1(data:&[String])->usize
 
 pub fn part2(data:&[String])->usize
 {
-    let mut d = Data::new(data);
-    let mut res = d.count();    
-    
-    while !d.visited.is_empty()
-    {
-        for p in d.visited.iter() { d.hash.insert(*p, '.'); }
-        d.visited.clear();
-        res+= d.count();
-    }
-    res
+    let mut data = Data::new(data);    
+
+    [0].iter()
+       .cycle()
+       .try_fold(data.count(), |res, _| 
+       {
+            if data.visited.is_empty()
+            {
+               Err(res)
+            }
+               else
+            {
+               data.fill();
+               Ok(res + data.count())
+            }
+       }
+    ).unwrap_err()
 }
 
 #[allow(unused)]
