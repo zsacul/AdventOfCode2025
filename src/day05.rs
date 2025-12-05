@@ -29,28 +29,6 @@ impl Data {
         }
     }
 
-    fn ok1_line(&self, n:usize) -> bool
-    {
-        for &(a,b) in &self.pairs
-        {
-            if a<=n && b>=n 
-            {
-                return true;
-            }            
-        }
-        false
-    }
-
-
-
-    fn ok1(&self) -> usize
-    {
-        self.numbers.iter()
-            .filter(|&&l| self.ok1_line(l))
-            .count()
-    }
-
-
     fn prepare(&mut self)
     {
         let mut t = vec![];
@@ -63,42 +41,39 @@ impl Data {
         t.dedup();
         self.tab = t;
     }
-  
-    fn ok2(&self) -> usize
+
+    fn in_range(&self, n:usize) -> bool
     {
-        let mut res =0;
-        let mut s = self.tab[0]-1;
+        self.pairs.iter().any(|&(a,b)| a<=n && b>=n)
+    }
 
-        println!("tab: {:#?}", self.tab);
+    fn count1(&self) -> usize
+    {
+        self.numbers.iter()
+                    .filter(|&&l| self.in_range(l))
+                    .count()
+    }
+    
+    fn count2(&mut self) -> usize
+    {        
+        self.prepare();
 
-        for &i in self.tab.iter()
-        {
-            let delta = if self.ok1_line(s+1) 
-            {
-                i-s
-            }
-                else 
-            {
-                1usize
-            };
-            
-            res += delta;
-            s=i;
-        }
-        res
+        self.tab.iter()
+                .fold((self.tab.first().unwrap_or(&0) - 1, 0),|(s,res),&i|
+                {
+                    (i,res + if self.in_range(s+1) { i-s } else { 1 })
+                }).1
     }
 }
 
 pub fn part1(data:&[String])->usize
 {
-    Data::new(data).ok1()
+    Data::new(data).count1()
 }
 
 pub fn part2(data:&[String])->usize
 {    
-    let mut data = Data::new(data);
-    data.prepare();
-    data.ok2()
+    Data::new(data).count2()
 }
 
 #[allow(unused)]
