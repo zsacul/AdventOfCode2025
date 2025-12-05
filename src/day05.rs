@@ -4,7 +4,7 @@ use super::tools;
 struct Data {
       pairs: Vec<(usize,usize)>,
     numbers: Vec<usize>,
-        tab: Vec<usize>,
+  positions: Vec<usize>,
 }
 
 impl Data {
@@ -12,20 +12,20 @@ impl Data {
         let sections: Vec<&[String]> = input.split(|line| line.is_empty()).collect();
         
         let pairs = sections[0].iter()
-            .map(|line| {
-                let nums = tools::split_to_usize(line, "-");
-                (nums[0].min(nums[1]), nums[0].max(nums[1]))
-            })
-            .collect();
+                               .map(|line| {
+                                   let nums = tools::split_to_usize(line, "-");
+                                   (nums[0].min(nums[1]), nums[0].max(nums[1]))
+                               })
+                               .collect();
         
         let numbers: Vec<usize> = sections[1].iter()
-            .map(|line| line.parse().unwrap())
-            .collect();
+                                             .map(|line| line.parse().unwrap())
+                                             .collect();
 
         Data {
             pairs,
             numbers,
-            tab: vec![],
+            positions: vec![],
         }
     }
 
@@ -39,7 +39,7 @@ impl Data {
         }
         t.sort();
         t.dedup();
-        self.tab = t;
+        self.positions = t;
     }
 
     fn in_range(&self, n:usize) -> bool
@@ -58,11 +58,12 @@ impl Data {
     {        
         self.prepare();
 
-        self.tab.iter()
-                .fold((self.tab.first().unwrap_or(&0) - 1, 0),|(s,res),&i|
-                {
-                    (i,res + if self.in_range(s+1) { i-s } else { 1 })
-                }).1
+        self.positions
+            .iter()
+            .fold((self.positions.first().unwrap_or(&0) - 1, 0), |(s,res),&i|
+            {
+                (i,res + if self.in_range(s+1) { i-s } else { 1 })
+            }).1
     }
 }
 
