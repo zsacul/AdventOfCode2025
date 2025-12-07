@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use super::vec2::Vec2;
 use super::tools;
 
@@ -6,69 +6,59 @@ use super::tools;
 struct Data 
 {
     hash    : HashMap<Vec2,char>,   
-    visited : HashSet<Vec2>,
-    dy      : usize,
+    dy      : i64,
     start   : Vec2,
 }
 
 impl Data {
     fn new(input: &[String]) -> Self 
     {
-        let hash = tools::get_hash_table(input);
-        let start = *hash.iter().find(|(_, &c)| c == 'S').unwrap().0;
+        let hash  = tools::get_hash_table(input);
+        let start = tools::find_in_hash(&hash,'S');        
      
         Data 
         {
             hash,
-            visited : HashSet::new(),
-            dy      : input.len(),
+            dy : input.len() as i64,
             start,
         }
     }
 
     fn count(&mut self)->usize
     {        
-        let mut res = 0;
+        let mut splits = 0;
         let mut tachions = vec![self.start];
 
-        while  !tachions.is_empty() 
+        while !tachions.is_empty() 
         {
-            let mut new_tachions = vec![];
+            let new_tachions: Vec<Vec2> = tachions.iter()
+                                                  .flat_map(|t| 
+                                                  {
+                                                        let point = t.d();
 
-            for t in tachions
-            {               
-                let p = Vec2::new(t.x, t.y + 1);
-
-                if t.y+1 < self.dy as i64
-                {                
-                    if !self.visited.contains(&p)
-                    {
-                        if self.get(p)=='^'
-                        {
-                            let l = Vec2::new(p.x-1,p.y);
-                            let r = Vec2::new(p.x+1,p.y);
-                            self.visited.insert(l);
-                            self.visited.insert(r);
-                            new_tachions.push(l);
-                            new_tachions.push(r);
-                            res+=1;
-                        }
-                        else
-                        {                            
-                            self.visited.insert(p);
-                            new_tachions.push(p);
-                        }
-                    }                
-                }
-            }
+                                                        if point.y < self.dy 
+                                                        {
+                                                          if self.get(point) == '^' 
+                                                          {
+                                                              splits += 1;
+                                                              vec![point.l(), point.r()]
+                                                          } 
+                                                            else 
+                                                          {
+                                                              vec![point]
+                                                          }
+                                                        } 
+                                                          else 
+                                                        {
+                                                          vec![]
+                                                        }
+                                                  }).collect();
 
             tachions = new_tachions;            
-            tachions.sort();
-            tachions.dedup();
-            
+            tachions.dedup();            
         }
 
-        res
+        splits
     }
 
     fn count2(&mut self)->usize
@@ -76,53 +66,52 @@ impl Data {
         let mut res = 0;
         let mut tachions = vec![self.start];
         let mut ways: HashMap<Vec2,usize> = HashMap::new();
+
         ways.insert(self.start,1);
 
-        while  !tachions.is_empty() 
+        while !tachions.is_empty() 
         {            
             let mut new_tachions = vec![];
             let mut new_ways: HashMap<Vec2,usize> = HashMap::new();
 
-            res = ways.iter().map(|p|p.1).sum();
+            res = ways.iter().map(|p| p.1).sum();
 
             for t in tachions
             {               
-                let p = Vec2::new(t.x, t.y + 1);
+                let p = t.d();
 
-                if t.y+1 < self.dy as i64
+                if p.y < self.dy
                 {                
                     if self.get(p)=='^'
                     {
-                        let l = Vec2::new(p.x-1,p.y);
-                        let r = Vec2::new(p.x+1,p.y);
+                      let l = p.l();
+                      let r = p.r();
                         
-                        self.visited.insert(l);
-                        self.visited.insert(r);
-                        new_tachions.push(l);
-                        new_tachions.push(r);
+                      new_tachions.push(l);
+                      new_tachions.push(r);
 
-                        let lw = *ways.get(&t).unwrap_or(&0);
-                        let la  = *new_ways.get(&l).unwrap_or(&0);
-                        let lb  = *new_ways.get(&r).unwrap_or(&0);
-                        new_ways.insert(l, la + lw);
-                        new_ways.insert(r, lb + lw);
+                      let   act =     *ways.get(&t).unwrap_or(&0);
+                      let l_add = *new_ways.get(&l).unwrap_or(&0);
+                      let r_add = *new_ways.get(&r).unwrap_or(&0);
+
+                      new_ways.insert(l, act + l_add);
+                      new_ways.insert(r, act + r_add);
                     }
-                        else
+                      else
                     {
-                        self.visited.insert(p);
-                        new_tachions.push(p);
-                        let pw = *ways.get(&t).unwrap_or(&0);
-                        let pa  = *new_ways.get(&p).unwrap_or(&0);
-                        new_ways.insert(p, pa + pw);    
-                    }
+                      new_tachions.push(p);
 
+                      let act =     *ways.get(&t).unwrap_or(&0);
+                      let add = *new_ways.get(&p).unwrap_or(&0);
+
+                      new_ways.insert(p, act + add);
+                    }
                 }
             }
 
-            tachions = new_tachions;            
-            tachions.sort();
+            tachions = new_tachions;
             tachions.dedup();
-            
+
             ways = new_ways;
         }
 
