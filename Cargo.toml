@@ -13,3 +13,6 @@ gif = "0.13.1"
 tokio = { version = "1.37.0", features = ["full"] }
 itertools = "0.13.0"
 num = "0.4.3"
+png_pong = "0.9.3"
+image = "0.25.9"
+

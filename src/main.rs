@@ -3,6 +3,7 @@ use timer::Timer;
 
 mod tools;
 //mod pixoo;
+//mod pixoocam;
 mod dijkstria;
 //use std::thread;
 //mod cycliclist;
@@ -17,8 +18,9 @@ mod day03;
 mod day04;
 mod day05;
 mod day06;
-mod day07;
-//mod day08;
+//mod day07;
+//mod day07vis;
+mod day08;
 //mod day09;
 //mod day10;
 //mod day11;
@@ -48,8 +50,8 @@ async fn pixoo_test_text2(ip:&str)
 }
      */
 
-//#[tokio::main]
-//async 
+#[tokio::main]
+async 
 fn main() 
 {
 
@@ -95,20 +97,21 @@ fn main()
         let day6_data  = tools::read_1d_string("data/day06.txt");
         day06::solve(&day6_data);
     }
-*/                
+
     {
         let _timer = Timer::new();
         let day7_data  = tools::read_1d_string("data/day07.txt");
-        day07::solve(&day7_data);
+//        day07::solve(&day7_data);
+        day07vis::solve(&day7_data).await
     }
-/*                
+*/
     {
         let _timer = Timer::new();
         let day8_data  = tools::read_1d_string("data/day08.txt");
         day08::solve(&day8_data);
     }
     
-            
+/*                            
     {
         let _timer = Timer::new();
         let day9_data  = tools::read_1d_string("data/day09.txt");

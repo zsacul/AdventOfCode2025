@@ -1,1 +1,1 @@
-cargo test day07 --release
+cargo test day08 --release
