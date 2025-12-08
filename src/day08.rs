@@ -3,10 +3,10 @@ use std::collections::HashMap;
 #[derive(Eq, PartialEq, Debug, Clone,Hash)]
 struct Voxel
 {
-    x : i64,
-    y : i64,
-    z : i64,
-    id:usize,
+    x  : i64,
+    y  : i64,
+    z  : i64,
+    id : usize,
 }
 
 impl Voxel 
@@ -34,8 +34,8 @@ impl Voxel
 
 struct Space
 {  
-    points : Vec<Voxel>,
-    size : HashMap<usize,usize>,
+    points   : Vec<Voxel>,
+    size     : HashMap<usize,usize>,
     distance : Vec<((usize,usize),usize)>,
 }
 
@@ -52,19 +52,33 @@ impl Space {
 
     fn fill(&mut self,data:&[String])
     {
-        let mut id=0;
-        let mut po = vec![];
+        let mut id = 0;
 
-        for line in data
+        self.points =
+        data.iter().map(|line|
+            {
+                self.size.insert(id, 1);
+                id+=1;
+                Voxel::from_str(line,id-1)
+            }
+        ).collect();
+
+        for i in 0..self.points.len()
         {
-            po.push(Voxel::from_str(line,id));
-            self.size.insert(id, 1);
-            id+=1;
+            for j in i+1..self.points.len()
+            {
+                if i!=j
+                {
+                    let d = self.dist(&self.points[i],&self.points[j]);
+                    self.distance.push( ((i,j),d) );
+                }
+            }
         }
-        self.points = po;
+
+        self.distance.sort_by(|a,b| a.1.cmp(&b.1) );
     }
  
-    fn dist(&self,v1:Voxel,v2:Voxel)->usize
+    fn dist(&self,v1:&Voxel,v2:&Voxel)->usize
     {
         (v1.x.abs_diff(v2.x)*v1.x.abs_diff(v2.x)) as usize +
         (v1.y.abs_diff(v2.y)*v1.y.abs_diff(v2.y)) as usize +
@@ -72,23 +86,7 @@ impl Space {
     }
 
     fn count(&mut self,con:usize)->usize
-    {
-       // println!("points: {:?}", self.points);
-        for i in 0..self.points.len()
-        {
-            for j in i+1..self.points.len()
-            {
-                if i!=j
-                {
-                    let d = self.dist(self.points[i].clone(),self.points[j].clone());
-                    self.distance.push( ((i,j),d) );
-                }
-            }
-        }
-
-        self.distance.sort_by(|a,b| 
-            a.1.cmp(&b.1).then_with(|| a.0.cmp(&b.0)) );
-        
+    {     
         let mut conections = 0;      
 
         for x in 0..self.distance.len()
@@ -99,10 +97,6 @@ impl Space {
             {
                 let new_id = std::cmp::min(self.points[i].id,self.points[j].id);
                 let old_id = std::cmp::max(self.points[i].id,self.points[j].id);
-
-               // print!("connect {} and {} => {}", i, j, new_id);
-               // print!("v1 = {},{},{} ", self.points[i].x, self.points[i].y, self.points[i].z);
-               // println!("v2 = {},{},{} ", self.points[j].x, self.points[j].y, self.points[j].z);
 
                 let i1 = *self.size.get(&self.points[i].id).unwrap();
                 let i2 = *self.size.get(&self.points[j].id).unwrap();
@@ -115,16 +109,15 @@ impl Space {
                     }
                 }
 
-                self.size.insert(new_id, i1+i2 );
+                self.size.insert(new_id, i1 + i2);
                 self.size.insert(old_id, 0);
                 
                 if i1+i2==self.points.len() 
                 {
                     return (self.points[i].x*self.points[j].x) as usize;
                 }
-
+                
                 conections += 1;
-               
                 if x==con || conections == con-1
                 {
                     break;
@@ -162,8 +155,8 @@ fn part2(data:&[String])->usize
 pub fn solve(data:&[String])
 {    
     println!("Day8");
-    println!("part1:{}",part1(data,1000));
-    println!("part2:{}",part2(data));    
+    println!("part1: {}",part1(data,1000));
+    println!("part2: {}",part2(data));    
 }
 
 #[allow(unused)]
