@@ -1,12 +1,11 @@
 use std::collections::HashMap;
+use super::vec3::Vec3;
 
 #[derive(Eq, PartialEq, Debug, Clone,Hash)]
 struct Voxel
 {
-    x  : i64,
-    y  : i64,
-    z  : i64,
-    id : usize,
+    pos :  Vec3,
+    id  : usize,
 }
 
 impl Voxel 
@@ -16,7 +15,8 @@ impl Voxel
     {
         Self 
         {
-            x,y,z,id
+            pos: Vec3::new(x, y, z),
+            id
         }
     }
 
@@ -34,9 +34,9 @@ impl Voxel
 
 struct Space
 {  
-    points   : Vec<Voxel>,
-    size     : HashMap<usize,usize>,
-    distance : Vec<((usize,usize),usize)>,
+    points    : Vec<Voxel>,
+    sizes     : HashMap<usize,usize>,
+    distances : Vec<((usize,usize),usize)>,
 }
 
 impl Space {
@@ -44,9 +44,9 @@ impl Space {
     {
         Self 
         {
-             points : Vec::new(),
-               size : HashMap::new(),
-           distance : Vec::new(),
+              points :     Vec::new(),
+               sizes : HashMap::new(),
+           distances :     Vec::new(),
         }
     }
 
@@ -57,7 +57,7 @@ impl Space {
         self.points =
         data.iter().map(|line|
             {
-                self.size.insert(id, 1);
+                self.sizes.insert(id, 1);
                 id+=1;
                 Voxel::from_str(line,id-1)
             }
@@ -67,39 +67,28 @@ impl Space {
         {
             for j in i+1..self.points.len()
             {
-                if i!=j
-                {
-                    let d = self.dist(&self.points[i],&self.points[j]);
-                    self.distance.push( ((i,j),d) );
-                }
+                self.distances.push( ((i,j),self.points[i].pos.dist_no_square(&self.points[j].pos)) );                
             }
         }
 
-        self.distance.sort_by(|a,b| a.1.cmp(&b.1) );
+        self.distances.sort_by(|a,b| a.1.cmp(&b.1) );
     }
- 
-    fn dist(&self,v1:&Voxel,v2:&Voxel)->usize
-    {
-        (v1.x.abs_diff(v2.x)*v1.x.abs_diff(v2.x)) as usize +
-        (v1.y.abs_diff(v2.y)*v1.y.abs_diff(v2.y)) as usize +
-        (v1.z.abs_diff(v2.z)*v1.z.abs_diff(v2.z)) as usize
-    }
-
+     
     fn count(&mut self,con:usize)->usize
     {     
         let mut conections = 0;      
 
-        for x in 0..self.distance.len()
+        for x in 0..self.distances.len()
         {
-            let ((i,j),_) = self.distance[x].clone();
+            let ((i,j),_) = self.distances[x];
 
             if self.points[i].id != self.points[j].id            
             {
                 let new_id = std::cmp::min(self.points[i].id,self.points[j].id);
                 let old_id = std::cmp::max(self.points[i].id,self.points[j].id);
 
-                let i1 = *self.size.get(&self.points[i].id).unwrap();
-                let i2 = *self.size.get(&self.points[j].id).unwrap();
+                let id1_count = *self.sizes.get(&self.points[i].id).unwrap();
+                let id2_count = *self.sizes.get(&self.points[j].id).unwrap();
 
                 for p in self.points.iter_mut()
                 {
@@ -109,12 +98,12 @@ impl Space {
                     }
                 }
 
-                self.size.insert(new_id, i1 + i2);
-                self.size.insert(old_id, 0);
+                self.sizes.insert(new_id, id1_count + id2_count);
+                self.sizes.insert(old_id, 0);
                 
-                if i1+i2==self.points.len() 
+                if id1_count + id2_count == self.points.len() 
                 {
-                    return (self.points[i].x*self.points[j].x) as usize;
+                    return (self.points[i].pos.x*self.points[j].pos.x) as usize;
                 }
                 
                 conections += 1;
@@ -124,17 +113,11 @@ impl Space {
                 }
             }
         }
-
         
-        let mut sizes = self.size.values().cloned().collect::<Vec<usize>>();
+        let mut sizes = self.sizes.values().cloned().collect::<Vec<usize>>();
         sizes.sort();
-        sizes.reverse();
-
-        sizes[0] * sizes[1] * sizes[2]
+        sizes.iter().rev().take(3).product::<usize>()        
     }
-
-
-
 }
 
 fn part1(data:&[String],con:usize)->usize

@@ -64,6 +64,13 @@ impl Vec3 {
         *self
     }
 
+    pub fn dist_no_square(&self, other: &Vec3) -> usize
+    {
+        (self.x.abs_diff(other.x)*self.x.abs_diff(other.x) +
+         self.y.abs_diff(other.y)*self.y.abs_diff(other.y) +
+         self.z.abs_diff(other.z)*self.z.abs_diff(other.z)) as usize
+    }
+
     #[allow(unused)]
     pub fn dot(a: &Vec3, b: &Vec3)->i64 
     {
