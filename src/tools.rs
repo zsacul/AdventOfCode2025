@@ -123,6 +123,16 @@ pub fn split_to_usize(str:&str,sep:&str)->Vec<usize>
        .collect::<Vec<usize>>()
 }
 
+#[allow(unused)]
+pub fn split_to_i64(str:&str,sep:&str)->Vec<i64>
+{
+    str.split(sep)
+       .collect::<Vec<&str>>()
+       .iter()
+       .map( |e| e.trim().parse::<i64>().unwrap() )
+       .collect::<Vec<i64>>()
+}
+
 
 #[allow(unused)]
 pub fn get_2d_iter(x_from:usize,x_to:usize,y_from:usize,y_to:usize)->Vec<(usize,usize)>

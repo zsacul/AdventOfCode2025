@@ -59,6 +59,8 @@ fn main()
     let num = pixoo::pixoo_test_text().await; 
     println!("pixoo_test_text: {:?}", num);
     return
+*/
+
 
     {
         let _timer = Timer::new();
@@ -98,19 +100,19 @@ fn main()
         day06::solve(&day6_data);
     }
 
-    {
-        let _timer = Timer::new();
-        let day7_data  = tools::read_1d_string("data/day07.txt");
-//        day07::solve(&day7_data);
-        day07vis::solve(&day7_data).await
-    }
+//    {
+//        let _timer = Timer::new();
+//        let day7_data  = tools::read_1d_string("data/day07.txt");
+////        day07::solve(&day7_data);
+//        day07vis::solve(&day7_data).await
+//    }
 
     {
         let _timer = Timer::new();
         let day8_data  = tools::read_1d_string("data/day08.txt");
         day08::solve(&day8_data);
     }
-*/    
+
 
     {
         let _timer = Timer::new();

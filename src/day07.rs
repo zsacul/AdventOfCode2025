@@ -142,10 +142,10 @@ pub fn solve(data:&[String])
     println!("part2: {}",part2(data));
 }
 
-#[test]
-fn test1()
+#[allow(unused)]
+fn get_test_data()->Vec<String>
 {
-    let v = vec![
+   vec![
         ".......S.......".to_string(),
         "...............".to_string(),
         ".......^.......".to_string(),
@@ -162,32 +162,17 @@ fn test1()
         "...............".to_string(),
         ".^.^.^.^.^...^.".to_string(),
         "...............".to_string(),
-    ];
-    
-    assert_eq!(part1(&v),21);
+    ]     
+}
+
+#[test]
+fn test1()
+{   
+    assert_eq!(part1(&get_test_data()),21);
 }
 
 #[test]
 fn test2()
-{
-    let v = vec![
-        ".......S.......".to_string(),
-        "...............".to_string(),
-        ".......^.......".to_string(),
-        "...............".to_string(),
-        "......^.^......".to_string(),
-        "...............".to_string(),
-        ".....^.^.^.....".to_string(),
-        "...............".to_string(),
-        "....^.^...^....".to_string(),
-        "...............".to_string(),
-        "...^.^...^.^...".to_string(),
-        "...............".to_string(),
-        "..^...^.....^..".to_string(),
-        "...............".to_string(),
-        ".^.^.^.^.^...^.".to_string(),
-        "...............".to_string(),
-    ];
-    
-    assert_eq!(part2(&v),40);
+{   
+    assert_eq!(part2(&get_test_data()),40);
 }
