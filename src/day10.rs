@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashSet};
 use super::tools;
 
 #[derive(Debug)]
@@ -7,6 +7,8 @@ struct World
     des     : u64,
     buttons : Vec<u64>,
     volt    : Vec<u64>,
+    clicks  : Vec<HashSet<usize>>,
+    best    : usize,
 }
 
 impl World
@@ -17,12 +19,11 @@ impl World
          .fold(0, |acc,v| acc | 1<<v.parse::<u64>().unwrap() )
     }
 
-    fn new(s:&String,part2:bool)->World 
+    fn new(s:&String)->World 
     {
         let t = tools::get_between(s,"[","]");
         let t = t.replace('.', "0");
         let t = t.replace('#', "1");
-        let n = t.len();
 
         //pares binary number
         let des:u64 = t.chars().rfold(0u64,|acc,c| acc*2 + (c as u64)-('0' as u64) );
@@ -33,13 +34,32 @@ impl World
             .split(" ")
             .map(|x| World::to_bin(tools::get_between(x, "(", ")") ))
             .collect();
-        
+
+        let clicks =  butons
+            .split(" ")
+            .map(|x| 
+                {
+                    tools::get_between(x, "(", ")")
+                    .split(',')
+                    .map(|y| y.parse::<usize>().unwrap() )
+                    .collect::<HashSet<usize>>()
+                }                
+            )
+            .collect::<Vec<HashSet<usize>>>();
+
+
+        let volt = tools::get_between(s,"{","}")
+                            .split(",")
+                            .map(|x| x.parse::<u64>().unwrap() )
+                            .collect::<Vec<u64>>();
 
         World 
         { 
-            des     ,
+            des,
             buttons : buttons,
-            volt    : vec![],
+            clicks  : clicks,
+            volt,
+            best    : usize::MAX,
         }       
     }
 
@@ -52,6 +72,11 @@ impl World
         for (i,b) in self.buttons.iter().enumerate()
         {
             println!("btn[{}]: {:b}",i,b);
+        }
+
+        for v in &self.volt
+        {
+            println!("volt: {}",v);
         }
 
 
@@ -71,10 +96,10 @@ impl World
 
     fn go(&mut self)->usize
     {
-        let lim = 1<<self.buttons.len();
+            let lim = 1<<self.buttons.len();
         let mut res = usize::MAX;
 
-        for i in 0..lim
+        for i in 0..lim as usize 
         {
             let mut val=0;
             for j in 0..self.buttons.len()
@@ -98,6 +123,87 @@ impl World
         res               
     }
 
+    fn voltage(&self,state:&[u64])->Vec<u64>
+    {
+        let mut res = vec![0; self.volt.len()];
+
+        for (i,n) in state.iter().enumerate()
+        {
+            for c in &self.clicks[i]
+            {
+                res[*c] += n;
+            }
+        }
+        res
+    }    
+
+    fn get_clicks(&self,state:&[u64])->usize
+    {
+        state.iter()        
+        .sum::<u64>() as usize
+
+//        state.iter()
+//            .enumerate()
+//            .map(|(i,&b)| b as usize * self.clicks[i].len() )
+//            .sum()
+    }
+
+    fn go2(&mut self,state:&[u64])->(bool,usize)
+    {
+        let v = self.voltage(state);
+        let mut res = (false,usize::MAX);
+        
+        let clicks = self.get_clicks(state);
+
+        if v==self.volt
+        {                        
+            return (true,self.get_clicks(state));
+        }
+
+        if clicks > self.best
+        {
+            return (false,res.1);
+        }
+
+        for i in 0..v.len()
+        {
+            if v[i] > self.volt[i]
+            {
+                return (false,res.1);
+            }
+        }
+
+        for i in 0..self.buttons.len()
+        {
+            let mut nstate = state.to_vec();
+            nstate[i] += 1;
+
+            //if nstate[i]>4
+            //{
+              //  continue;
+            //}
+
+            let run = self.go2(&mut nstate);
+            
+            if run.0
+            {
+                let nv = run.1;
+                
+                if nv<=self.best
+                {
+                    println!("found voltage with {} clicks",nv);
+                    println!("state: {:?}",nstate);
+
+                    self.best = nv;
+                    res = (true,nv);
+                }
+            }
+        }
+
+        res
+
+    }
+
 
 
     fn calc(&mut self)->usize
@@ -108,7 +214,9 @@ impl World
 
     fn calc2(&mut self)->usize
     {
-        self.go()
+        self.print();
+        self.best = usize::MAX;
+        self.go2(&mut vec![0;self.buttons.len()]).1
     }
 
 }
@@ -117,13 +225,15 @@ impl World
 pub fn part1(data:&[String])->usize
 {
     data.iter()
-        .map(|s| World::new(s,false).calc() )
+        .map(|s| World::new(s).calc() )
         .sum()
 }
 
 pub fn part2(data:&[String])->usize
 {
-    5555    
+    data.iter()
+        .map(|s| World::new(s).calc2() )
+        .sum()
 }
 
 #[allow(unused)]
@@ -155,11 +265,17 @@ fn test1()
 fn test2()
 {
     let v = get_test_data();
-    assert_eq!(part2(&v),0);
+    assert_eq!(part2(&v),33);
 }
 
 #[test]
 fn test3()
 {    
     assert_eq!(part1(&vec!["[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}".to_string()]),2);
+}
+
+#[test]
+fn test4()
+{    
+    assert_eq!(part2(&vec!["[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}".to_string()]),10);
 }
