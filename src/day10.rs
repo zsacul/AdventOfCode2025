@@ -1,4 +1,5 @@
 use std::{collections::HashSet};
+use std::{collections::HashMap};
 use super::tools;
 
 #[derive(Debug)]
@@ -9,6 +10,9 @@ struct World
     volt    : Vec<u64>,
     clicks  : Vec<HashSet<usize>>,
     best    : usize,
+    state   : Vec<u64>,
+    n:usize,
+    memo: HashMap<Vec<u64>, (bool, usize)>,
 }
 
 impl World
@@ -52,14 +56,18 @@ impl World
                             .split(",")
                             .map(|x| x.parse::<u64>().unwrap() )
                             .collect::<Vec<u64>>();
+                        let n = buttons.len();
 
         World 
         { 
             des,
-            buttons : buttons,
-            clicks  : clicks,
+            buttons,
+            clicks,
             volt,
             best    : usize::MAX,
+            state   : vec![0; n],
+            n,
+            memo    : HashMap::new(),
         }       
     }
 
@@ -148,20 +156,26 @@ impl World
 //            .sum()
     }
 
-    fn go2(&mut self,state:&[u64])->(bool,usize)
+    fn go2(&mut self)->(bool,usize)
     {
-        let v = self.voltage(state);
+        if let Some(v) = self.memo.get(&self.state)
+        {
+            return *v;
+        }   
+        let v = self.voltage(&self.state);
         let mut res = (false,usize::MAX);
         
-        let clicks = self.get_clicks(state);
+        let clicks = self.get_clicks(&self.state);
 
         if v==self.volt
         {                        
-            return (true,self.get_clicks(state));
+            self.memo.insert(self.state.clone(), (true,self.get_clicks(&self.state)));
+            return (true,self.get_clicks(&self.state));
         }
 
         if clicks > self.best
         {
+            self.memo.insert(self.state.clone(), (false,res.1));
             return (false,res.1);
         }
 
@@ -169,21 +183,16 @@ impl World
         {
             if v[i] > self.volt[i]
             {
+                self.memo.insert(self.state.clone(), (false,res.1));
                 return (false,res.1);
             }
         }
 
         for i in 0..self.buttons.len()
         {
-            let mut nstate = state.to_vec();
-            nstate[i] += 1;
-
-            //if nstate[i]>4
-            //{
-              //  continue;
-            //}
-
-            let run = self.go2(&mut nstate);
+            self.state[i] += 1;
+            let run = self.go2();
+            self.state[i] -= 1;
             
             if run.0
             {
@@ -191,20 +200,16 @@ impl World
                 
                 if nv<=self.best
                 {
-                    println!("found voltage with {} clicks",nv);
-                    println!("state: {:?}",nstate);
-
+                   // println!("found voltage with {} clicks",nv);
                     self.best = nv;
                     res = (true,nv);
                 }
             }
         }
 
+        self.memo.insert(self.state.clone(), res);
         res
-
     }
-
-
 
     fn calc(&mut self)->usize
     {
@@ -216,7 +221,8 @@ impl World
     {
         self.print();
         self.best = usize::MAX;
-        self.go2(&mut vec![0;self.buttons.len()]).1
+        self.state = vec![0; self.buttons.len()];
+        self.go2().1
     }
 
 }
