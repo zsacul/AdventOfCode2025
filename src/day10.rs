@@ -1,16 +1,14 @@
 use std::{collections::HashSet};
-use good_lp::solvers::highs::highs;
-use good_lp::{Solution, SolverModel};
-use good_lp::{variables, variable, Expression};
-
 use super::tools;
+use good_lp::solvers::highs::highs;
+use good_lp::{Solution, SolverModel,variables, variable, Expression};
 
 #[derive(Debug)]
 struct World
 {
-    des     : u64,
+    code    : u64,
     buttons : Vec<u64>,
-    volt    : Vec<u64>,
+    voltge  : Vec<u64>,
  }
 
 impl World
@@ -27,42 +25,40 @@ impl World
         let t = t.replace('.', "0");
         let t = t.replace('#', "1");
 
-        //pares binary number
-        let des:u64 = t.chars().rfold(0u64,|acc,c| acc*2 + (c as u64)-('0' as u64) );
+        let code = t.chars().rfold(0u64,|acc,c| (acc<<1) | (c as u8 - b'0') as u64);
 
         let butons = tools::get_between(s,"] "," {");
 
         let buttons:Vec<u64> = butons
-            .split(" ")
-            .map(|x| World::to_bin(tools::get_between(x, "(", ")") ))
-            .collect();
+                              .split(" ")
+                              .map(|x| World::to_bin(tools::get_between(x, "(", ")") ))
+                              .collect();
 
-        let clicks =  butons
-            .split(" ")
-            .map(|x| 
-                {
-                    tools::get_between(x, "(", ")")
-                    .split(',')
-                    .map(|y| y.parse::<usize>().unwrap() )
-                    .collect::<HashSet<usize>>()
-                }                
-            )
-            .collect::<Vec<HashSet<usize>>>();
+        let clicks = butons
+                     .split(" ")
+                     .map(|x|
+                         {
+                             tools::get_between(x, "(", ")")
+                             .split(',')
+                             .map(|y| y.parse::<usize>().unwrap() )
+                             .collect::<HashSet<usize>>()
+                         }                
+                     )
+                     .collect::<Vec<HashSet<usize>>>();
 
         let mut clicks = clicks;
         clicks.sort_by(|a, b| b.len().cmp(&a.len()));
 
-
-        let volt = tools::get_between(s,"{","}")
-                            .split(",")
-                            .map(|x| x.parse::<u64>().unwrap() )
-                            .collect::<Vec<u64>>();
+        let voltge = tools::get_between(s,"{","}")
+                     .split(",")
+                     .map(|x| x.parse::<u64>().unwrap() )
+                     .collect::<Vec<u64>>();
 
         World 
         { 
-            des,
+            code,
             buttons,
-            volt,
+            voltge,
         }       
     }
 
@@ -71,64 +67,44 @@ impl World
     {
         println!();
         
-        println!("des: {:b}",self.des);
+        println!("code: {:b}",self.code);
         for (i,b) in self.buttons.iter().enumerate()
         {
             println!("btn[{}]: {:b}",i,b);
         }
 
-        for v in &self.volt
+        for v in &self.voltge
         {
-            println!("volt: {}",v);
+            println!("voltge: {}",v);
         }
     }
 
-    fn num_ones(&self,v:u64)->usize
+    fn try_all(&mut self)->usize
     {
-        let mut c = 0;
-        let mut x = v;
-        while x>0
-        {
-            if (x & 1) !=0 { c+=1; }
-            x >>=1;
-        }
-        c
-    }
-
-    fn go(&mut self)->usize
-    {
-            let lim = 1<<self.buttons.len();
-        let mut res = 30000;
-
-        for i in 0..lim as usize 
-        {
-            let mut val=0;
-            for j in 0..self.buttons.len()
-            {                                
-                if (i & (1<<j)) !=0
-                {
-                    val ^= self.buttons[j];
-                }
-            }
-
-            if val == self.des
+        (0..1usize<<self.buttons.len())
+        .map(|i|
             {
-                let mm = self.num_ones(i as u64);
-                //if mm< res
-                //{
-                //    println!("found: {:b} with {} buttons",val,mm);
-                //}
-                res = res.min(mm);
+                let mut val=0;
+                for j in 0..self.buttons.len()
+                {                                
+                    if (i & (1<<j)) !=0
+                    {
+                        val ^= self.buttons[j];
+                    }
+                }
+
+                if val==self.code { i.count_ones() as usize } else { usize::MAX }
             }
-        }
-        res               
+        )
+        .min()
+        .unwrap()
     }
 
     fn lp_solver(&mut self)-> usize
     {
-        let n = self.volt.len();
+        let n = self.voltge.len();
 
-        let m: Vec<Vec<u64>> = self.buttons
+        let matrix: Vec<Vec<u64>> = self.buttons
                                    .iter()
                                    .map(|btn| 
                                         {
@@ -147,34 +123,29 @@ impl World
                                    .collect();
 
 
-        let constraints = self.volt.len();
+        let constraints = self.voltge.len();
 
         let mut vars = variables!();
         let x: Vec<_> = (0..self.buttons.len())
-                                       .map(|_| vars.add(variable().integer().min(0).max(300)))
-                                       .collect();
-    
+                        .map(|_| vars.add(variable().integer().min(0).max(300)))
+                        .collect();
+
         let mut problem = vars.minimise(x.iter().sum::<Expression>()).using(highs);
 
         for i in 0..constraints 
         {
             let exp: Expression = x.iter()
-                                   .zip(m.iter())
+                                   .zip(matrix.iter())
                                    .map(|(&xi, row)| xi * row[i] as i32)
                                    .sum();
 
-            problem = problem.with(exp.eq(self.volt[i] as i32));
+            problem = problem.with(exp.eq(self.voltge[i] as i32));
         }
 
         let solution = problem.solve().unwrap();
-
-        //for (id, ss) in x.iter().enumerate()        
-        //{
-        //    println!("x{} = {}", id, solution.value(*ss));
-        //}
         
         x.iter()
-         .map(|&xi| solution.value(xi).round() as usize)
+         .map(|&id| solution.value(id).round() as usize)
          .sum()       
     }
 }
@@ -183,14 +154,14 @@ impl World
 pub fn part1(data:&[String])->usize
 {
     data.iter()
-        .map(|s| World::new(s).go() )
+        .map(|s| World::new(s).try_all() )
         .sum()
 }
 
-pub fn part2(data:&[String])->u128
+pub fn part2(data:&[String])->usize
 {
     data.iter()
-        .map(|s| World::new(s).lp_solver() as u128 )
+        .map(|s| World::new(s).lp_solver() )
         .sum()
 }
 
