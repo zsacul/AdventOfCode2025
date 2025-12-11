@@ -118,19 +118,20 @@ fn main()
         let day9_data  = tools::read_1d_string("data/day09.txt");
         day09::solve(&day9_data);
     }  
- 
+*/     
     {
         let _timer = Timer::new();
         let day10_data  = tools::read_1d_string("data/day10.txt");
         day10::solve(&day10_data);
     }
-*/    
+
+/*                            
     {
         let _timer = Timer::new();
         let day11_data  = tools::read_1d_string("data/day11.txt");
         day11::solve(&day11_data);
     }
-/*                            
+
     {
         let _timer = Timer::new();
         let day12_data  = tools::read_1d_string("data/day12.txt");
