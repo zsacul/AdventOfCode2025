@@ -1,5 +1,10 @@
 use std::{collections::HashSet};
 use std::{collections::HashMap};
+use std::error::Error;
+
+//use good_lp::{variables};
+//use good_lp::solvers::Highs;
+
 use super::tools;
 
 #[derive(Debug)]
@@ -9,10 +14,11 @@ struct World
     buttons : Vec<u64>,
     volt    : Vec<u64>,
     clicks  : Vec<HashSet<usize>>,
-    best    : usize,
+    best    : i16,
     state   : Vec<u64>,
-    n:usize,
-    memo: HashMap<Vec<u64>, (bool, usize)>,
+    memo    : HashMap<Vec<i16>,  i16>,
+    sum     : usize,
+    rand    : rand::rngs::ThreadRng,
 }
 
 impl World
@@ -51,6 +57,9 @@ impl World
             )
             .collect::<Vec<HashSet<usize>>>();
 
+        let mut clicks = clicks;
+        clicks.sort_by(|a, b| b.len().cmp(&a.len()));
+
 
         let volt = tools::get_between(s,"{","}")
                             .split(",")
@@ -58,16 +67,19 @@ impl World
                             .collect::<Vec<u64>>();
                         let n = buttons.len();
 
+        let sum = volt.iter().sum::<u64>() as usize;
+
         World 
         { 
             des,
             buttons,
             clicks,
             volt,
-            best    : usize::MAX,
-            state   : vec![0; n],
-            n,
-            memo    : HashMap::new(),
+            best  : 30000,
+            state : vec![0; n],
+            sum,
+            memo  : HashMap::new(),
+            rand  : rand::thread_rng(),
         }       
     }
 
@@ -105,7 +117,7 @@ impl World
     fn go(&mut self)->usize
     {
             let lim = 1<<self.buttons.len();
-        let mut res = usize::MAX;
+        let mut res = 30000;
 
         for i in 0..lim as usize 
         {
@@ -130,7 +142,7 @@ impl World
         }
         res               
     }
-
+/*
     fn voltage(&self,state:&[u64])->Vec<u64>
     {
         let mut res = vec![0; self.volt.len()];
@@ -156,59 +168,162 @@ impl World
 //            .sum()
     }
 
-    fn go2(&mut self)->(bool,usize)
+    fn click(&self,button:usize,left:&mut Vec<i16>)->i16
     {
-        if let Some(v) = self.memo.get(&self.state)
-        {
-            return *v;
-        }   
-        let v = self.voltage(&self.state);
-        let mut res = (false,usize::MAX);
-        
-        let clicks = self.get_clicks(&self.state);
+        //let maxl = 1;//self.clicks[button]
+                            //.iter()
+                            //.map(|&c| left[c] )
+                            //.max()
+                            //.unwrap_or(0)
+                            //.max(1);
 
-        if v==self.volt
-        {                        
-            self.memo.insert(self.state.clone(), (true,self.get_clicks(&self.state)));
-            return (true,self.get_clicks(&self.state));
+        for c in &self.clicks[button]
+        {
+            left[*c] -= 1;
         }
+        1
+    }
+
+    fn unclick(&self,button:usize,cc:i16,left:&mut Vec<i16>)
+    {
+        for c in &self.clicks[button]
+        {
+            left[*c] += cc;
+        }
+    }   
+ 
+    fn newgo(&mut self,clicks:i16,mut left:Vec<i16>)->i16
+    {
+
+        //let v = self.voltage(&self.state);
 
         if clicks > self.best
         {
-            self.memo.insert(self.state.clone(), (false,res.1));
-            return (false,res.1);
+            return 30000;
         }
 
-        for i in 0..v.len()
+        if let Some(&m) = self.memo.get(&left)
         {
-            if v[i] > self.volt[i]
-            {
-                self.memo.insert(self.state.clone(), (false,res.1));
-                return (false,res.1);
-            }
+            return m;
+        }
+        
+        if left.iter().all(|&n| n==0)
+        {                  
+            self.memo.insert(left.clone(), 0);      
+            return 0;
         }
 
-        for i in 0..self.buttons.len()
+        if left.iter().any(|&n| n<0)
+        {                  
+            self.memo.insert(left.clone(), 30000);      
+            return 30000;
+        }
+        
+        let store = left.clone();
+        let mut res = 30000;
+
+        let mut order = (0..self.buttons.len())
+            .collect::<Vec<usize>>();
+        order.shuffle(  &mut self.rand);
+
+        for ii in &order
         {
-            self.state[i] += 1;
-            let run = self.go2();
-            self.state[i] -= 1;
+            let i = *ii;
+            let cc = self.click(i,&mut left);
+            let run = self.newgo(clicks+cc,left.clone());
+            self.unclick(i,cc,&mut left);
             
-            if run.0
+            if run+1< res && run!=30000
             {
-                let nv = run.1;
-                
-                if nv<=self.best
+                res = run+1;
+
+                if clicks==0
                 {
-                   // println!("found voltage with {} clicks",nv);
-                    self.best = nv;
-                    res = (true,nv);
+                    if res<self.best
+                    {
+                        println!("left {:?} clicking {} buttons {} gives {}",left.clone(),clicks,i,run);
+                        self.best = res;
+                    }
                 }
             }
         }
 
-        self.memo.insert(self.state.clone(), res);
+        self.memo.insert(store, res);
         res
+        
+    }
+*/
+/*
+    fn fl_solver2(&self)->usize
+    {
+        let mut vars = variables!();
+        let a = vars.add(variable().binary());
+        let b = vars.add(variable().binary());
+
+        let solution = vars.maximise(a + 2 * b)
+        .using(HighsSolver::default())  // <-- This replaces .using(default_solver)
+        .with((a + b) <= 1)
+        .with(a - b == 0)
+        .solve()
+        .unwrap();  // Or handle the Result properly
+
+        println!("a = {}, b = {}", solution.value(a), solution.value(b));
+        0
+    }
+*/
+    fn lp_solver(&mut self)-> Result<usize, Box<dyn Error>>
+    {
+        let n = self.volt.len();
+
+   //assert_eq!(part2(&vec!["[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}".to_string()]),11);
+   //(0,1,2,3,4) 
+   //(0,3,4) 
+   //(0,1,2,4,5) 
+   //(1,2) 
+   //{10,11,11,5,10,5}
+/*
+        let m = vec![vec![0;n]; self.buttons.len()];
+        
+        variables! {
+            vars:
+            0 <= x0 (integer) <= 290;
+            0 <= x1 (integer) <= 290;
+            0 <= x2 (integer) <= 290;
+            0 <= x3 (integer) <= 290;
+            0 <= x4 (integer) <= 290;
+        }; // variables can also be added dynamically with ProblemVariables::add
+
+        let solution = 
+        vars.minimise(x0+x1+x2+x3+x4)
+            //.using(default_solver) // IBM's coin_cbc by default
+//            .using(HighsSolver::default())
+            .with(x0*m[0][0]+x1*m[1][0]+x2*m[2][0]+x3*m[3][0]+x4*m[4][0]==self.volt[0] as i32)
+            .with(x0*m[0][1]+x1*m[1][1]+x2*m[2][1]+x3*m[3][1]+x4*m[4][1]==self.volt[1] as i32)
+            .with(x0*m[0][2]+x1*m[1][2]+x2*m[2][2]+x3*m[3][2]+x4*m[4][2]==self.volt[2] as i32)
+            .with(x0*m[0][3]+x1*m[1][3]+x2*m[2][3]+x3*m[3][3]+x4*m[4][3]==self.volt[3] as i32)
+            .with(x0*m[0][4]+x1*m[1][4]+x2*m[2][4]+x3*m[3][4]+x4*m[4][4]==self.volt[4] as i32)
+            .solve()
+            .unwrap()          ;
+        
+        let sol = 
+        vec![
+            solution.value(x0) as u64,
+            solution.value(x1) as u64,
+            solution.value(x2) as u64,
+            solution.value(x3) as u64,
+            solution.value(x4) as u64,
+        ];
+
+        println!("x0={}", sol[0]);
+        println!("x1={}", sol[1]);
+        println!("x2={}", sol[2]);
+        println!("x3={}", sol[3]);        
+        println!("x4={}", sol[4]);        
+        let s = sol.iter().sum::<u64>() as usize;
+
+        Ok(s)
+        */
+        Ok(0)
     }
 
     fn calc(&mut self)->usize
@@ -219,10 +334,12 @@ impl World
 
     fn calc2(&mut self)->usize
     {
-        self.print();
-        self.best = usize::MAX;
+       // self.print();
+        self.best = self.sum as i16;
         self.state = vec![0; self.buttons.len()];
-        self.go2().1
+        //let left =  self.volt.iter().map(|n| *n as i16).collect::<Vec<i16>>();
+        //self.newgo(0,  left) as usize
+        self.lp_solver().unwrap() as usize
     }
 
 }
@@ -246,7 +363,7 @@ pub fn part2(data:&[String])->usize
 pub fn solve(data:&[String])
 {    
     println!("Day10");
-    println!("part1: {}",part1(data));
+ //   println!("part1: {}",part1(data));
     println!("part2: {}",part2(data));
 }
 
@@ -281,7 +398,19 @@ fn test3()
 }
 
 #[test]
-fn test4()
+fn part2_test1()
 {    
     assert_eq!(part2(&vec!["[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}".to_string()]),10);
+}
+
+#[test]
+fn part2_test2()
+{    
+    assert_eq!(part2(&vec!["[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}".to_string()]),12);
+}
+
+#[test]
+fn part2_test3()
+{    
+    assert_eq!(part2(&vec!["[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}".to_string()]),11);
 }
