@@ -47,7 +47,8 @@ impl World
                      .collect::<Vec<HashSet<usize>>>();
 
         let mut clicks = clicks;
-        clicks.sort_by(|a, b| b.len().cmp(&a.len()));
+        //clicks.sort_by(|a, b| b.len().cmp(&a.len()));
+        clicks.sort_by_key(|b| std::cmp::Reverse(b.len()));
 
         let voltge = tools::get_between(s,"{","}")
                      .split(",")
@@ -108,16 +109,7 @@ impl World
                                    .iter()
                                    .map(|btn| 
                                         {
-                                            let mut row = vec![0u64; n];
-
-                                            for i in 0..n
-                                            {
-                                                if (btn & (1<<i)) !=0
-                                                {
-                                                    row[i] = 1;
-                                                }
-                                            }
-                                            row
+                                            (0..n).map(|i| if (btn & (1<<i)) !=0 { 1u64 } else { 0u64 }).collect()
                                         }                
                                    )
                                    .collect();

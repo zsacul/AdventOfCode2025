@@ -113,3 +113,24 @@ impl PixooCam {
     }
 
 }
+
+/*
+async fn pixoo_test_text2(ip:&str)
+{
+    
+    let pixoo = PixooClient::new(&ip[..]).unwrap();
+        
+    // Load the resource.
+    //let frames = DivoomAnimationResourceLoader::from_gif_file("c:/rust/AdventOfCode/AdventOfCode2024/target/aoc_output.gif").unwrap();
+    let frames = DivoomAnimationResourceLoader::from_gif_file("c:/Grid64x64/data/kn2.gif").unwrap();
+
+    // Build animation with 16 pixel canvas and 100ms frame play speed.
+    let builder = DivoomAnimationBuilder::new(64, Duration::from_millis(100)).unwrap();
+    let animation = builder.draw_frames(&frames, 0).build();
+
+    // Send to device here.
+    let res = pixoo.send_image_animation(animation).await;
+    
+    println!("{:?}", res.err());
+}
+     */

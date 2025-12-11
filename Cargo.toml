@@ -16,3 +16,4 @@ num = "0.4.3"
 png_pong = "0.9.3"
 image = "0.25.9"
 good_lp = { version = "1.14.2", default-features = false, features = ["highs"] }
+lru-cache = "0.1.2"
